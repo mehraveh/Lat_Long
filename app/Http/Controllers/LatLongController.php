@@ -3,57 +3,35 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Address;
+use App\Jobs\GetLatLng;
+use Carbon\Carbon;
 
 class LatLongController extends Controller
 {
-	public function __construct(APIController $api_controller)
+	public function __construct()
 	{
-		$this->api_controller = $api_controller;
 	}
 
     public function get_lat_lng()
     {
-    	$fh = fopen(storage_path('addresses.txt'), "r");
+    	$api_controller = new APIController ;
+    	$fh = fopen(storage_path('addresses_t.txt'), "r");
 
 		$i = 0;
 
-		$found_addresses = [];
-		$notfound_addresses = [];
 
 		if ( $fh ) 
 		{
 		  while ( !feof($fh) ) 
 		  {
 		    $line = fgets($fh);
-
-
-		        $result = $this->api_controller->api_call($line);
-
-		        $result = json_decode($result);
-		        if($result->num > 0)
-		        {
-		          $found_addresses[] = [
-		            "lat" => $result->result[0]->start_location->lat, 
-		            "lng" => $result->result[0]->start_location->lng, 
-		            "address" => trim($line), 
-		          ];
-		        }
-		        else
-		        {
-		          $notfound_addresses[] = [
-		            "lat" => "",
-		            "lng" => "",
-		            "address" => trim($line), 
-		          ];
-		        }
-		      // }
-
+              GetLatLng::dispatchNow($line, $api_controller);
 		      $i++;
 		  }
 
 		  fclose($fh);
 		}
 
-		return ($found_addresses);
 	}
 }

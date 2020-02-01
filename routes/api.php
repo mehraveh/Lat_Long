@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,3 +19,4 @@ use Illuminate\Http\Request;
 // });
 
 Route::get('latlng', 'LatLongController@get_lat_lng');
+Route::get('show', 'LatLongQueueController@show');
