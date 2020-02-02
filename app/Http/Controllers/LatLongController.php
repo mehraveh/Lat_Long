@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Controllers\NLPController;
 use Illuminate\Http\Request;
 use App\Models\Address;
 use App\Jobs\GetLatLng;
@@ -15,7 +15,8 @@ class LatLongController extends Controller
 
     public function get_lat_lng()
     {
-    	$api_controller = new APIController ;
+    	$api_controller = new APIController;
+    	$nlp_controller = new NLPController;
     	$fh = fopen(storage_path('addresses_t.txt'), "r");
 
 		$i = 0;
@@ -26,7 +27,7 @@ class LatLongController extends Controller
 		  while ( !feof($fh) ) 
 		  {
 		    $line = fgets($fh);
-              GetLatLng::dispatchNow($line, $api_controller);
+              GetLatLng::dispatchNow($line, $api_controller, $nlp_controller);
 		      $i++;
 		  }
 
