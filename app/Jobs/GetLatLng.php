@@ -93,11 +93,6 @@ class GetLatLng implements ShouldQueue
                 }
                 if($result->num > 0)
                 {
-                  return [
-                    "lat" => $result->result[0]->start_location->lat, 
-                    "lng" => $result->result[0]->start_location->lng, 
-                    "address" => trim($this->line), 
-                  ];
                     $address = Address::where('lat_long', $result->result[0]->start_location->lat . $result->result[0]->start_location->lng)->first();
                     if (!$address)
                     {
@@ -108,6 +103,11 @@ class GetLatLng implements ShouldQueue
                         $address->lat_long = $result->result[0]->start_location->lat . $result->result[0]->start_location->lng;
                         $address->save();
                     }
+                    return [
+                    "lat" => $result->result[0]->start_location->lat, 
+                    "lng" => $result->result[0]->start_location->lng, 
+                    "address" => trim($this->line), 
+                  ];
 
                 }
 
