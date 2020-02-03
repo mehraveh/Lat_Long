@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Http\Controllers\NLPController;
+use App\Helpers\ApiUtils;
+use App\Helpers\TextProcessingUtils;
+use App\simplexlsx\src\SimpleXLSX;
 use Illuminate\Http\Request;
 use App\Models\Address;
 use App\Jobs\GetLatLng;
@@ -15,24 +17,17 @@ class LatLongController extends Controller
 
     public function get_lat_lng()
     {
-    	$api_controller = new APIController;
-    	$nlp_controller = new NLPController;
+    	$api = new ApiUtils;
+    	$nlp = new TextProcessingUtils;
     	$fh = fopen(storage_path('addresses_t.txt'), "r");
+        $xlsx = SimpleXLSX::parse('/home/mehriimm/lat_lng/storage/آدرس. راتین.xlsx');
 
-		$i = 0;
-
-
-		if ( $fh ) 
+        for($x = 1; $x < 160; $x++)
 		{
-		  while ( !feof($fh) ) 
-		  {
-		    $line = fgets($fh);
-              GetLatLng::dispatchNow($line, $api_controller, $nlp_controller);
-		      $i++;
-		  }
-
-		  fclose($fh);
+		    $line = array_column($xlsx->rows(),0)[$x];
+	        GetLatLng::dispatchNow($line, $api, $nlp);
 		}
+
 
 	}
 }

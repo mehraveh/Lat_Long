@@ -3,7 +3,10 @@
 namespace App\Jobs;
 use App\Http\Controllers\APIController;
 use App\Http\Controllers\NLPController;
+use App\Helpers\ApiUtils;
+use App\Helpers\TextProcessingUtils;
 use App\Models\Address;
+use App\Models\Keyword;
 use App\simplexlsx\src\SimpleXLSX;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,11 +19,11 @@ class GetLatLng implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
 
-    public function __construct($line, APIController $api_controller, NLPController $nlp_controller)
+    public function __construct($line, ApiUtils $api, TextProcessingUtils $text_process)
     {
         $this->line = $line;
-        $this->api_controller = $api_controller;
-        $this->nlp_controller = $nlp_controller;
+        $this->api = $api;
+        $this->text_process = $text_process;
     }
 
 
@@ -30,61 +33,37 @@ class GetLatLng implements ShouldQueue
     }
 
 
-
     public function pre_process()
-      {
+    {
+        $text_processor = new TextProcessingUtils;
+        $this->line = $text_processor->change_numbers($this->line);
+        $this->line = $text_processor->convert_words($this->line);
+        $this->line = $text_processor->delete_unnecessary_words($this->line);
+        $this->line = $text_processor->delete_engish_words($this->line);
 
-        $this->line = str_replace(':','', $this->line);
-        $this->line = str_replace('آدرس','', $this->line);
-        $this->line = str_replace('خ ','خیابان ', $this->line);
-        $this->line = preg_replace('/خ[0-9]/','خیابان ', $this->line);
-        //$this->line = preg_replace('/پ[0-9]/','پلاک ', $this->line);
-        //$this->line = preg_replace('/ک[0-9]/','کوچه ', $this->line);
-        $this->line = preg_replace('/ط[0-9]/','طبقه ', $this->line);
-        $this->line = preg_replace('/ز[0-9]/','زنگ ', $this->line);
-        $this->line = preg_replace('!طبقه.*$!', '',$this->line);
-        $this->line = preg_replace('!واحد.*$!', '',$this->line);
-        $this->line = preg_replace('!زنگ.*$!', '',$this->line);
-        $this->line = preg_replace('!واحد.*$!', '',$this->line);
+       // if($text_processor->is_address($this->line))
+        {
+            $this->line = $text_processor->delete_before_colon($this->line);
+            $this->line = $text_processor->delete_delimiters($this->line); 
+            $this->line = $text_processor->delete_slash($this->line);
+            $this->line = $text_processor->delete_inside_prantheses($this->line);  
+            $this->line = $text_processor->delete_prantheses($this->line);  
 
-        $this->line = str_replace('/','', $this->line);
-        $this->line = str_replace("\\",'', $this->line);
-        $this->line = str_replace('خونه','خانه', $this->line);
+        }
+/*        else
+        {
+            echo  $this->line .'<hr><hr>';
+        }*/
+    }
 
-        $this->line = str_replace('۱','1', $this->line);
-        $this->line = str_replace('۲','2', $this->line);
-        $this->line = str_replace('۳','3', $this->line);
-        $this->line = str_replace('۴','4', $this->line);
-        $this->line = str_replace('۵','5', $this->line);
-        $this->line = str_replace('۶','6', $this->line);
-        $this->line = str_replace('۷','7', $this->line);
-        $this->line = str_replace('۸','8', $this->line);
-        $this->line = str_replace('۹','9', $this->line);
-        $this->line = str_replace('۰','0', $this->line);
-
-        $this->line = str_replace(',',' , ', $this->line);
-        $this->line = str_replace('،',' ، ', $this->line);
-        $this->line = str_replace('-',' ، ', $this->line);
-
-        $this->line = preg_replace('/[a-z]/',' ', $this->line);
-        $this->line = preg_replace('/[A-Z]/',' ', $this->line);
-        $this->line = preg_replace("/\([^)]+\)/","",$this->line);
-      }
 
     public function handle()
     {   
         $this->pre_process();
-        
-        $result = $this->api_controller->api_call($this->line);
+        $result = $this->api->api_call($this->line);
                 $result = json_decode($result);
                 if(!$result){
-                    echo $this->line;
-/*                    $line_t = $this->line;
-                    echo  $line_t . '<hr><br>';
-                    if( $this->nlp_controller->is_address($line_t) == FALSE)
-                    {
-                        echo "its not address!!!";
-                    }*/
+                    echo "** ".$this->line.' **<hr><br>';
                     return [
                     "lat" => "",
                     "lng" => "",
@@ -93,6 +72,25 @@ class GetLatLng implements ShouldQueue
                 }
                 if($result->num > 0)
                 {
+                    $words = explode(" ", $this->line);
+                    foreach($words as $word)
+                    {
+                       $keyword = Keyword::where('word', $word)->first();
+
+                       if(!$keyword)
+                       {
+                            $keyword = new Keyword;
+                            $keyword->word = $word;
+                            $keyword->repeted = 1;
+                            $keyword->save();
+                       }
+                       else
+                       {
+                            $keyword->repeted = $keyword->repeted + 1;
+                            $keyword->save();
+                       }
+                    }
+
                     $address = Address::where('lat_long', $result->result[0]->start_location->lat . $result->result[0]->start_location->lng)->first();
                     if (!$address)
                     {
@@ -107,18 +105,18 @@ class GetLatLng implements ShouldQueue
                     "lat" => $result->result[0]->start_location->lat, 
                     "lng" => $result->result[0]->start_location->lng, 
                     "address" => trim($this->line), 
-                  ];
+                            ];
 
                 }
 
                 else
                 {
-                  echo $this->line . '<hr><br>';
+                  echo "** ".$this->line.' **<hr><br>';
                   return [
                     "lat" => "",
                     "lng" => "",
                     "address" => trim($this->line), 
-                  ];
+                        ];
                 }
 
     }

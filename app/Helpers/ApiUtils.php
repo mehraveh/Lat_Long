@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 
-class Utils
+class ApiUtils
 {
 	function api_call($input)
 	{
@@ -28,8 +28,7 @@ class Utils
 	  ));
 
 	  $response = curl_exec($curl);
-
 	  curl_close($curl);
-	  return   $response;
+	  return $response;
 	}
 }
