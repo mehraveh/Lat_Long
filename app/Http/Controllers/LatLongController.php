@@ -19,7 +19,7 @@ class LatLongController extends Controller
     {
     	$api = new ApiUtils;
     	$nlp = new TextProcessingUtils;
-    	$fh = fopen(storage_path('addresses_t.txt'), "r");
+    	//$fh = fopen(storage_path('addresses_t.txt'), "r");
         $xlsx = SimpleXLSX::parse('/home/mehriimm/lat_lng/storage/آدرس. راتین.xlsx');
 
         for($x = 1; $x < 160; $x++)

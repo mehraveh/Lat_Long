@@ -16,11 +16,16 @@ class TextProcessingUtils
 
     public function delete_unnecessary_words($text)
     {
+        //$word = strpos($text,'طبقه');
         $text = preg_replace('!طبقه.*$!', ' ',$text);
         $text = preg_replace('!واحد.*$!', ' ',$text);
+        $text = preg_replace('!دفتر.*$!', ' ',$text);
+        $text = preg_replace('!پلاک.*$!', ' ',$text);
         $text = preg_replace('!زنگ.*$!', ' ',$text);
         $text = preg_replace('!کدپستی.*$!', ' ',$text);
-        //$text = preg_replace('!آدرس.*$!', ' ',$text);
+        $text = str_replace('تقاطع',' ', $text);
+        $text = str_replace('نبش',' ', $text);
+
         return $text;
     }
 
@@ -31,7 +36,19 @@ class TextProcessingUtils
         $text = str_replace('خ.','خیابان ', $text);
         $text = preg_replace('/ط(\d)+/','طبقه ', $text);
         $text = str_replace(' ط ','طبقه ', $text);
-        //$text = preg_replace('/پ(\d)+/','پلاک ', $text);
+        $text = str_replace('دانشکده ','دانشگاه ', $text);
+        $text = str_replace('کارخونه ','کارخانه ', $text);
+        $text = str_replace('4راه','چهارراه ', $text);
+        $text = str_replace('4 راه','چهارراه ', $text);
+        preg_match_all('/پ(\d)+/',$text, $word);
+        //echo count($word[1]);
+        if(count($word[1])>0)
+        {
+            $word1 = str_replace('پ','پلاک ', $word[0][0]);
+            $text = preg_replace('/پ(\d)+/', $word1, $text);
+        }
+
+
         $text = preg_replace('/ز[0-9]/','زنگ ', $text);
         return $text;
     }
@@ -109,24 +126,46 @@ class TextProcessingUtils
 
     public function is_address($line)
     {
-        $num = 0;
-        if ( $xlsx = SimpleXLSX::parse('/home/mehriimm/lat_lng/storage/names.xlsx') )
-        {  
-        } 
-        else
-         {                  
-            return SimpleXLSX::parseError(); 
-         }
+        $keywords = array( 
+            'مجتمع',
+            'کارخانه',
+            'خیابان',
+            'پلاک',
+            'خانه',
+            'پارک',
+            'کوچه',
+            'زنگ',
+            'پارکینگ',
+            'بزرگراه',
+            'اتوبان',
+            'شهید',
+            'نبش',
+            'شرکت',
+            'میدان',
+            'بلوار',
+            'طبقه',
+            'بن بست',
+            'بنبس,',
+            'مجموعه',
+            'ساختمان',
+            'واحد',
+            'تقاطع',
+            'شمال',
+            'جنوب',
+            'غرب',
+            'شرق',
+            );
 
-        for($x = 0; $x < count(array_column($xlsx->rows(),0)); $x++)
+        $num = 0;
+        for($x = 0; $x < count($keywords); $x++)
         {
-            if (strpos($line, array_column($xlsx->rows(),0)[$x])) 
+            if (strpos($line, $keywords[$x])) 
             {
                 $num += 1;
             }
         }
 
-        if($num >= 2)
+        if($num >= 1)
         {
             return TRUE;
         }

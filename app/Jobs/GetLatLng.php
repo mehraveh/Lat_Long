@@ -41,7 +41,7 @@ class GetLatLng implements ShouldQueue
         $this->line = $text_processor->delete_unnecessary_words($this->line);
         $this->line = $text_processor->delete_engish_words($this->line);
 
-       // if($text_processor->is_address($this->line))
+      //if($text_processor->is_address($this->line))
         {
             $this->line = $text_processor->delete_before_colon($this->line);
             $this->line = $text_processor->delete_delimiters($this->line); 
@@ -50,9 +50,9 @@ class GetLatLng implements ShouldQueue
             $this->line = $text_processor->delete_prantheses($this->line);  
 
         }
-/*        else
+/*       else
         {
-            echo  $this->line .'<hr><hr>';
+            echo  " <h1> not address  </h1> <br>";
         }*/
     }
 
@@ -63,7 +63,7 @@ class GetLatLng implements ShouldQueue
         $result = $this->api->api_call($this->line);
                 $result = json_decode($result);
                 if(!$result){
-                    echo "** ".$this->line.' **<hr><br>';
+                   // echo "** ".$this->line.' **<hr><br>';
                     return [
                     "lat" => "",
                     "lng" => "",
@@ -71,7 +71,7 @@ class GetLatLng implements ShouldQueue
                   ];
                 }
                 if($result->num > 0)
-                {
+                {   
                     $words = explode(" ", $this->line);
                     foreach($words as $word)
                     {
@@ -111,7 +111,7 @@ class GetLatLng implements ShouldQueue
 
                 else
                 {
-                  echo "** ".$this->line.' **<hr><br>';
+                 // echo "** ".$this->line.' **<hr><br>';
                   return [
                     "lat" => "",
                     "lng" => "",

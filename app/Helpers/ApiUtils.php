@@ -26,9 +26,33 @@ class ApiUtils
 	      "X-Requested-With: XMLHttpRequest"
 	    ),
 	  ));
-
-	  $response = curl_exec($curl);
-	  curl_close($curl);
-	  return $response;
+	    $response = curl_exec($curl);
+	    //echo $response. '<hr>';
+		$resp = json_decode($response);
+		if(isset( $resp->result[0]->certainty))
+		{
+		  	//echo $resp->result[0]->certainty;
+		  	if( $resp->result[0]->certainty < 50)
+		  	{
+		        //echo "** ".$input.' **<br>';
+			    //echo "not certain: ".$resp->result[0]->certainty."<hr>";
+		  		$response = "";
+		  	}
+		}
+     	else
+		{
+			if(isset( $resp->status))
+			{
+		        echo "** ".$input.' **<br>';
+			    echo "no result <hr>";
+			}
+			else
+			{
+				//echo "  ".$input.' <br>';
+			   // echo "invalid url <hr>";
+			}
+		}
+		curl_close($curl);
+		return $response;
 	}
 }
